@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Myanmar Wiki Reader</title>
+    <title>ဓမ္မ Reader</title>
     <style>
+    /* Google ရဲ့ Myanmar Font ကိုပါ လှမ်းခေါ်ထားခြင်း */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
+
+/* စာဖတ်တဲ့ နေရာကို ဒီ Font သုံးဖို့ ခိုင်းထားမယ် */
+#reader-card {
+    font-family: 'Noto Sans Myanmar', 'Pyidaungsu', sans-serif !important;
+}
+
         :root {
             --sidebar-width: 280px;
             --bg-body: #f0f0f0; --bg-card: #ffffff; --text-main: #2c3e50; --topbar-bg: #2c3e50; --hr-color: #eee;
@@ -97,8 +105,8 @@
     }
     #content { font-size: 15pt !important; } /* စာရွက်ပေါ်တွင် ဖတ်ရအဆင်ပြေမည့် အရွယ်အစား */
 }
-
-    </style>
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="sepia-mode">
 
@@ -110,7 +118,7 @@
         <button class="btn-icon" onclick="saveThisPage()">⭐ သိမ်းမယ်</button>
     </div>
     <div class="nav-group">
-      <button class="btn-icon" onclick="window.print()" title="Print">🖨️ ပရင့်</button>
+        <button class="btn-icon" onclick="exportPDF()">🖨️ ပရင့်ထုတ်မည်</button>
 
         <div class="dot" style="background:#fff" onclick="setTheme('light')"></div>
         <div class="dot" style="background:#fdf6e3" onclick="setTheme('sepia')"></div>
@@ -228,6 +236,54 @@
             if(!cached) cBox.innerHTML = "<p style='text-align:center;'>အင်တာနက် မရှိပါ။</p>";
         }
     }
+  
+function exportPDF() {
+    // ၁။ ယာယီ Iframe တစ်ခု ဆောက်မယ်
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = '0';
+    document.body.appendChild(printFrame);
+
+    // ၂။ Reader Card ထဲက စာသားတွေကို ကူးယူမယ်
+    const content = document.getElementById('reader-card').innerHTML;
+    const title = document.getElementById('title-display').innerText;
+
+    // ၃။ Iframe ထဲကို စာသားနဲ့ CSS တွေ ထည့်မယ်
+    const frameDoc = printFrame.contentWindow.document;
+    frameDoc.open();
+    frameDoc.write(`
+        <html>
+            <head>
+                <title>${title}</title>
+                <style>
+                    body { font-family: 'Pyidaungsu', 'Sagar', sans-serif; padding: 20px; line-height: 1.6; }
+                    h2 { text-align: center; color: #333; }
+                    hr { border: 0; border-top: 1px solid #eee; }
+                    /* Print ထုတ်တဲ့အခါ ပုံစံကျအောင် */
+                    @page { margin: 20mm; }
+                </style>
+            </head>
+            <body>
+                <h2>${title}</h2>
+                <hr>
+                <div>${content}</div>
+                <script>
+                    // စာမျက်နှာ အားလုံး load ဖြစ်ပြီးတာနဲ့ Print ခေါ်မယ်
+                    window.onload = function() { 
+                        window.print(); 
+                        // ပရင့်ပိတ်သွားရင် Iframe ကို ပြန်ဖျက်မယ်
+                        setTimeout(() => { window.frameElement.remove(); }, 100);
+                    };
+                <\/script>
+            </body>
+        </html>
+    `);
+    frameDoc.close();
+}
 
     // Bookmarks Logic
     function saveThisPage() {
@@ -259,8 +315,16 @@
         localStorage.setItem('favs', JSON.stringify(b.filter(x => x !== t)));
         renderBookmarks();
     }
-</script>
+    function printNow() {
+    // Median (GoNative) အတွက် Native Print Command
+    if (navigator.userAgent.indexOf('GoNative') > -1) {
+        window.location.href = 'gonative://print/printPage';
+    } else {
+        window.print();
+    }
+}
 
+</script>
 
 </body>
 </html>
