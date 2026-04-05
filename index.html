@@ -238,9 +238,10 @@
     }
   
 function exportPDF() {
+    const currentUrl = window.location.href;
     if (typeof gonative !== 'undefined') {
-        // Median ရဲ့ Share Page command ကို လှမ်းခေါ်တာပါ
-        gonative.share.sharePage();
+        // ဖုန်းရဲ့ အပြင် Browser (Chrome/Safari) မှာ သွားဖွင့်ခိုင်းတာပါ
+        gonative.open.external({url: currentUrl});
     } else {
         window.print();
     }
