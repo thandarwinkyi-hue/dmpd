@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Myanmar Wiki Reader</title>
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --bg-body: #f0f0f0; --bg-card: #ffffff; --text-main: #2c3e50; --topbar-bg: #2c3e50; --hr-color: #eee;
+        }
+        /* Themes */
+        body.sepia-mode { --bg-body: #f1e7d0; --bg-card: #fdf6e3; --text-main: #5b4636; --topbar-bg: #5b4636; --hr-color: #dcd3bc; }
+        body.dark-mode { --bg-body: #121212; --bg-card: #1e1e1e; --text-main: #d1d1d1; --topbar-bg: #000000; --hr-color: #333; }
+
+        body { 
+            font-family: 'Pyidaungsu', 'Sagar', sans-serif; 
+            background-color: var(--bg-body); color: var(--text-main); 
+            margin: 0; display: flex; height: 100vh; overflow: hidden; transition: background 0.3s;
+        }
+
+        /* Top Navigation Bar */
+        .top-bar { 
+            position: fixed; top: 0; left: 0; right: 0; height: 55px;
+            background: var(--topbar-bg); color: white; 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 15px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .nav-group { display: flex; gap: 10px; align-items: center; }
+        .btn-icon { background: rgba(255,255,255,0.15); border: none; color: white; padding: 8px 12px; cursor: pointer; border-radius: 6px; font-size: 14px; }
+        
+        /* Sidebar (Responsive) */
+        #sidebar { 
+            width: var(--sidebar-width); background: #2c3e50; color: white; 
+            position: fixed; left: -280px; top: 0; bottom: 0;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
+            overflow-y: auto; padding: 20px; box-sizing: border-box;
+        }
+        #sidebar.active { left: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
+        #sidebar h3 { color: #f1c40f; font-size: 18px; margin: 25px 0 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        #sidebar ul { list-style: none; padding: 0; margin: 0; }
+        #sidebar li { 
+            padding: 14px; cursor: pointer; border-bottom: 1px solid #34495e; 
+            display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+        }
+        #sidebar li:active { background: #3e5871; }
+        .del-mark { color: #ff7675; padding: 5px; font-weight: bold; }
+
+        /* Main Reader Container */
+        #main-content { 
+            flex-grow: 1; overflow-y: auto; width: 100%; height: 100%;
+            padding-top: 55px; scroll-behavior: smooth;
+        }
+        #reader-card { 
+            max-width: 800px; margin: 20px auto; background: var(--bg-card); 
+            padding: 25px; border-radius: 12px; min-height: 80vh;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); box-sizing: border-box;
+        }
+
+        /* Clean Content Styles */
+        #content { font-size: 20px; line-height: 1.8; text-align: justify; word-wrap: break-word; }
+        #content a { text-decoration: none !important; color: inherit !important; border-bottom: 1px dashed #999; }
+        table, .mw-editsection, .navbox, .infobox, .ws-header, .headerContainer { display: none !important; }
+        hr { border: 0; border-top: 1px solid var(--hr-color); margin: 20px 0; }
+
+        /* Theme Dots */
+        .dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; cursor: pointer; }
+        
+        #overlay { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500; 
+        }
+        #overlay.active { display: block; }
+
+        @media (max-width: 600px) {
+            #reader-card { margin: 10px; padding: 20px; border-radius: 0; }
+            #content { font-size: 19px; }
+        }
+        /* ပရင့်ထုတ်ရန်အတွက် သီးသန့် CSS */
+@media print {
+    /* မလိုအပ်သော ခလုတ်များနှင့် မာတိကာကို ဖျောက်ထားမည် */
+    .top-bar, #sidebar, #overlay { display: none !important; }
+    
+    /* စာရွက်ပေါ်တွင် အဖြူအမည်းနှင့် မျက်နှာပြင်အပြည့် ဖြစ်စေရန် */
+    body, #main-content { 
+        background: white !important; 
+        color: black !important; 
+        height: auto !important; 
+        overflow: visible !important; 
+        padding: 0 !important; 
+        margin: 0 !important;
+    }
+    #reader-card { 
+        box-shadow: none !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+    }
+    #content { font-size: 15pt !important; } /* စာရွက်ပေါ်တွင် ဖတ်ရအဆင်ပြေမည့် အရွယ်အစား */
+}
+
+    </style>
+</head>
+<body class="sepia-mode">
+
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<div class="top-bar">
+    <div class="nav-group">
+        <button class="btn-icon" onclick="openSidebar()">☰ မာတိကာ</button>
+        <button class="btn-icon" onclick="saveThisPage()">⭐ သိမ်းမယ်</button>
+    </div>
+    <div class="nav-group">
+      <button class="btn-icon" onclick="window.print()" title="Print">🖨️ ပရင့်</button>
+
+        <div class="dot" style="background:#fff" onclick="setTheme('light')"></div>
+        <div class="dot" style="background:#fdf6e3" onclick="setTheme('sepia')"></div>
+        <div class="dot" style="background:#1e1e1e" onclick="setTheme('dark')"></div>
+        <button class="btn-icon" onclick="adjustFont(2)">A+</button>
+        <button class="btn-icon" onclick="adjustFont(-2)">A-</button>
+    </div>
+</div>
+
+<nav id="sidebar">
+    <h2 style="font-size: 20px; margin-top: 0;">Reader Menu</h2>
+    <h3>📖 မာတိကာ</h3>
+    <ul id="menu-list"></ul>
+    <h3>⭐ မှတ်သားထားသည်များ</h3>
+    <ul id="bookmark-list"></ul>
+</nav>
+
+<main id="main-content">
+    <article id="reader-card">
+        <h2 id="title-display" style="margin-top: 0;">ဓမ္မအသိတိုးပွားပါစေ🙏🙏🙏</h2>
+        <hr>
+        <div id="content">မာတိကာမှ ဖတ်လိုသော အကြောင်းအရာကို ရွေးချယ်ပါ။</div>
+    </article>
+</main>
+
+<script>
+    // ခေါင်းစဉ်များ ထပ်တိုးရန် ဤနေရာတွင် ပြင်ပါ
+    const myLinks = [
+        "ပုံတော်စုံ ငါးရာငါးဆယ် ဇာတ်ဝတ္ထု",
+        "ဓမ္မပဒဝတ္ထုတော်ကြီး",
+        "ကိုယ်ကျင့်အဘိဓမ္မာ"
+        ];
+
+    let currentActiveTitle = "";
+    let fontSize = 20;
+
+    function openSidebar() { document.getElementById('sidebar').classList.add('active'); document.getElementById('overlay').classList.add('active'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+
+    function setTheme(m) {
+        document.body.classList.remove('sepia-mode', 'dark-mode');
+        if(m !== 'light') document.body.classList.add(m + '-mode');
+    }
+
+    function adjustFont(s) {
+        fontSize += s;
+        if(fontSize < 14) fontSize = 14;
+        if(fontSize > 40) fontSize = 40;
+        document.getElementById('content').style.fontSize = fontSize + 'px';
+    }
+
+    // --- အရေးကြီးသောအဆင့် (File Not Found မဖြစ်စေရန်) ---
+    // Link များကို ကြားဖြတ်ဖမ်းယူခြင်း
+    document.getElementById('content').addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (link) {
+            const href = link.getAttribute('href');
+            // '/wiki/' ပါတဲ့ link တွေဆိုရင် ရှေ့ဆက်မသွားအောင် တားမယ်
+            if (href && href.startsWith('/wiki/')) {
+                e.preventDefault(); 
+                // ခေါင်းစဉ်ကိုပဲ ယူပြီး App ထဲမှာ ပြန်ဖွင့်မယ်
+                const newTitle = decodeURIComponent(href.replace('/wiki/', ''));
+                loadWiki(newTitle);
+            }
+        }
+    });
+
+    // App Initialization
+    window.onload = () => {
+        const menu = document.getElementById('menu-list');
+        myLinks.forEach(t => {
+            let li = document.createElement('li');
+            li.innerText = t;
+            li.onclick = () => { loadWiki(t); closeSidebar(); };
+            menu.appendChild(li);
+        });
+        renderBookmarks();
+    };
+
+    // Wiki Loading with Offline Cache Logic
+    async function loadWiki(title) {
+        currentActiveTitle = title;
+        document.getElementById('title-display').innerText = title;
+        const cBox = document.getElementById('content');
+        
+        // ၁။ Offline Storage စစ်ဆေးခြင်း
+        const cached = localStorage.getItem('cache_' + title);
+        if (cached) {
+            cBox.innerHTML = cached;
+            document.getElementById('main-content').scrollTop = 0;
+        } else {
+            cBox.innerHTML = "<p style='text-align:center;'>အင်တာနက်မှ ရယူနေသည်...</p>";
+        }
+
+        const api = `https://my.wikisource.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text`;
+        
+        try {
+            const res = await fetch(api);
+            const data = await res.json();
+            if(data.parse) {
+                const p = new DOMParser();
+                const d = p.parseFromString(data.parse.text['*'], 'text/html');
+                
+                // မလိုတာတွေ ဖယ်ထုတ်မယ်
+                d.querySelectorAll('table, .mw-editsection, .ws-header, .headerContainer').forEach(el => el.remove());
+                
+                const cleanHtml = d.body.innerHTML;
+                cBox.innerHTML = cleanHtml;
+                
+                // အော့ဖ်လိုင်းအတွက် သိမ်းဆည်းခြင်း
+                localStorage.setItem('cache_' + title, cleanHtml); 
+                document.getElementById('main-content').scrollTop = 0;
+            }
+        } catch(e) {
+            if(!cached) cBox.innerHTML = "<p style='text-align:center;'>အင်တာနက် မရှိပါ။</p>";
+        }
+    }
+
+    // Bookmarks Logic
+    function saveThisPage() {
+        if(!currentActiveTitle) return;
+        let b = JSON.parse(localStorage.getItem('favs') || "[]");
+        if(!b.includes(currentActiveTitle)) {
+            b.push(currentActiveTitle);
+            localStorage.setItem('favs', JSON.stringify(b));
+            renderBookmarks();
+            alert("မှတ်သားပြီးပါပြီ");
+        }
+    }
+
+    function renderBookmarks() {
+        const bl = document.getElementById('bookmark-list');
+        bl.innerHTML = "";
+        let b = JSON.parse(localStorage.getItem('favs') || "[]");
+        b.forEach(t => {
+            let li = document.createElement('li');
+            li.innerHTML = `<span>${t}</span><span class="del-mark" onclick="removeMark(event, '${t}')">✕</span>`;
+            li.onclick = () => { loadWiki(t); closeSidebar(); };
+            bl.appendChild(li);
+        });
+    }
+
+    function removeMark(e, t) {
+        e.stopPropagation();
+        let b = JSON.parse(localStorage.getItem('favs') || "[]");
+        localStorage.setItem('favs', JSON.stringify(b.filter(x => x !== t)));
+        renderBookmarks();
+    }
+</script>
+
+
+</body>
+</html>
