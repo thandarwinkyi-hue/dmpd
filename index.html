@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ဓမ္မ Reader</title>
+    <title>ဓမ္မပဒ၊ ငါးရာ့ငါးဆယ်နှင့် အဋ္ဌကထာနိဿယျ</title>
     <style>
     /* Google ရဲ့ Myanmar Font ကိုပါ လှမ်းခေါ်ထားခြင်း */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
@@ -147,8 +147,8 @@
 <script>
     // ခေါင်းစဉ်များ ထပ်တိုးရန် ဤနေရာတွင် ပြင်ပါ
     const myLinks = [
-        "ပုံတော်စုံ ငါးရာငါးဆယ် ဇာတ်ဝတ္ထု",
-        "ဓမ္မပဒဝတ္ထုတော်ကြီး",
+        "ပုံတော်စုံ ငါးရာငါးဆယ် ဇာတ်ဝတ္ထု","ဓမ္မပဒဝတ္ထုတော်ကြီး",
+        "သရုပ်ပြဓမ္မပဒကျမ်း","ပါရာဇိကကဏ္ဍ-အဋ္ဌကထာ-ပတွဲ နိဿယ-၁","ပါရာဇိကကဏ္ဍ-အဋ္ဌကထာ-ပတွဲ နိဿယ-၂","ပါရာဇိကကဏ္ဍ-အဋ္ဌကထာ-ပတွဲ နိဿယ-၃","ပါရာဇိကကဏ္ဍ-အဋ္ဌကထာ-ပတွဲ နိဿယ-၄","ပါရာဇိကကဏ္ဍ-အဋ္ဌကထာ-ဒုတွဲ နိဿယ-၁","ဗုဒ္ဓဘာသာကောင်းတစ်ယောက်","ဗုဒ္ဓဘာသာကောင်းတစ်ယောက်-ဒု",
         "ကိုယ်ကျင့်အဘိဓမ္မာ"
         ];
 
@@ -210,7 +210,7 @@
             cBox.innerHTML = cached;
             document.getElementById('main-content').scrollTop = 0;
         } else {
-            cBox.innerHTML = "<p style='text-align:center;'>အင်တာနက်မှ ရယူနေသည်...</p>";
+            cBox.innerHTML = "<p style='text-align:center;'>ခဏစောင့်ပါခင်ဗျာ ...</p>";
         }
 
         const api = `https://my.wikisource.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text`;
@@ -233,7 +233,7 @@
                 document.getElementById('main-content').scrollTop = 0;
             }
         } catch(e) {
-            if(!cached) cBox.innerHTML = "<p style='text-align:center;'>အင်တာနက် မရှိပါ။</p>";
+            if(!cached) cBox.innerHTML = "<p style='text-align:center;'>အင်တာနက် ဖွင့်ပါခင်ဗျာ။</p>";
         }
     }
   
